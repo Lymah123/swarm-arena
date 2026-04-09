@@ -1,1 +1,5 @@
 /target
+/test-ledger
+programs-arena/target/
+programs-arena/node_modules/
+programs-arena/.anchor/

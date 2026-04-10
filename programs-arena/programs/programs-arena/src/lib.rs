@@ -2,6 +2,12 @@ use anchor_lang::prelude::*;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
+#[error_code]
+pub enum ArenaError {
+    #[msg("Score overflow")]
+    ScoreOverflow,
+}
+
 #[program]
 pub mod arena {
     use super::*;
@@ -19,7 +25,18 @@ pub mod arena {
         log.timestamp = Clock::get()?.unix_timestamp;
 
         let rep = &mut ctx.accounts.agent_reputation;
-        rep.total_score += scores[0];
+        // Initialize agent reputation on first creation
+        if rep.agent == Pubkey::default() {
+            rep.agent = ctx.accounts.signer.key();
+            rep.total_score = 0;
+            rep.episodes_played = 0;
+            rep.bump = ctx.bumps.agent_reputation;
+        }
+
+        rep.total_score = rep
+            .total_score
+            .checked_add(scores[0])
+            .ok_or(error!(ArenaError::ScoreOverflow))?;
         rep.episodes_played += 1;
 
         msg!(
@@ -36,10 +53,10 @@ pub mod arena {
 #[instruction(episode_id: u64)]
 pub struct LogEpisode<'info> {
     #[account(
-        init,
+        init_if_needed,
         payer = signer,
         space = 8 + 8 + 16 + 32 + 8,
-        seeds = [b"episode_log", episode_id.to_le_bytes().as_ref()],
+        seeds = [b"episode", episode_id.to_le_bytes().as_ref()],
         bump
     )]
     pub episode_log: Account<'info, EpisodeLog>,

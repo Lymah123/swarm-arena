@@ -4,7 +4,7 @@ mod events;
 mod systems;
 
 use bevy::prelude::*;
-use systems::{setup, agent_policy, movement, rewards, episode};
+use systems::{setup, agent_policy, movement, rewards, episode, on_chain};
 
 fn main() {
     App::new()
@@ -18,6 +18,8 @@ fn main() {
             movement::move_agents,
             rewards::collect_resources,
             episode::tick_episode,
+            episode::tick_episode,
+            on_chain::commit_episode,
         ).chain())
         .run();
 }

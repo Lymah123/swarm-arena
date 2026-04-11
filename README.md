@@ -55,7 +55,7 @@ Solana program (Anchor)
 
 ## Build Status
 
-- [ ] Bevy grid environment
+- [x] Bevy grid environment
 - [ ] Episode loop (tick -> score -> end)
 - [ ] WASM compilation via Trunk
 - [ ] Solana program (Anchor)

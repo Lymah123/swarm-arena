@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("CCnPxPLd4GbxycDTcP12KP98rWtjKCCNcZC4hqHCB1KV");
 
 #[error_code]
 pub enum ArenaError {

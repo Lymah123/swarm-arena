@@ -53,6 +53,14 @@ Solana program (Anchor)
 
 ------------------------------------------------------------
 
+## Live on-chain evidence
+
+First devnet transaction — episode 35 committed and finalized:
+https://explorer.solana.com/tx/38yieCpWNbex4RDEzXw8pEREHYQNswyW9hYBHXZmigLP9FEmp8FSpDAwPNvU3dcZuY5RrUdWRp6EJcjYJUcEoL21?cluster=devnet
+
+Program ID: `CCnPxPLd4GbxycDTcP12KP98rWtjKCCNcZC4hqHCB1KV`  
+Network: Solana devnet
+
 ## Build Status
 
 - [x] Bevy grid environment

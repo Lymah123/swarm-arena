@@ -11,35 +11,30 @@ use solana_sdk::{
 use std::str::FromStr;
 
 const PROGRAM_ID: &str = "CCnPxPLd4GbxycDTcP12KP98rWtjKCCNcZC4hqHCB1KV";
-const RPC_URL: &str = "http://127.0.0.1:8899";
+const RPC_URL: &str = "https://api.devnet.solana.com";
 
 pub fn commit_episode(mut events: EventReader<EpisodeEnd>) {
     for ep in events.read() {
         println!("Committing episode {} to Solana...", ep.episode_id);
 
-        let client = RpcClient::new_with_commitment(
-            RPC_URL.to_string(),
-            CommitmentConfig::confirmed(),
-        );
+        let client =
+            RpcClient::new_with_commitment(RPC_URL.to_string(), CommitmentConfig::confirmed());
 
-        let keypair = match read_keypair_file(
-            &*shellexpand::tilde("~/.config/solana/id.json")
-        ) {
+        let keypair = match read_keypair_file(&*shellexpand::tilde("~/.config/solana/id.json")) {
             Ok(k) => k,
-            Err(e) => { eprintln!("Failed to read keypair: {}", e); continue; }
+            Err(e) => {
+                eprintln!("Failed to read keypair: {}", e);
+                continue;
+            }
         };
 
         let program_id = Pubkey::from_str(PROGRAM_ID).unwrap();
         let episode_id_bytes = ep.episode_id.to_le_bytes();
 
-        let (episode_pda, _) = Pubkey::find_program_address(
-            &[b"episode", &episode_id_bytes],
-            &program_id,
-        );
-        let (reputation_pda, _) = Pubkey::find_program_address(
-            &[b"reputation", keypair.pubkey().as_ref()],
-            &program_id,
-        );
+        let (episode_pda, _) =
+            Pubkey::find_program_address(&[b"episode", &episode_id_bytes], &program_id);
+        let (reputation_pda, _) =
+            Pubkey::find_program_address(&[b"reputation", keypair.pubkey().as_ref()], &program_id);
 
         let scores = [
             ep.scores.get(0).map(|(_, s)| *s as u64).unwrap_or(0),
@@ -68,7 +63,10 @@ pub fn commit_episode(mut events: EventReader<EpisodeEnd>) {
 
         let recent_blockhash = match client.get_latest_blockhash() {
             Ok(bh) => bh,
-            Err(e) => { eprintln!("Failed to get blockhash: {}", e); continue; }
+            Err(e) => {
+                eprintln!("Failed to get blockhash: {}", e);
+                continue;
+            }
         };
 
         let tx = Transaction::new_signed_with_payer(

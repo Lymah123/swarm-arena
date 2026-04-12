@@ -4,14 +4,15 @@
 resolution = true
 skip-lint = false
 
-[programs.localnet]
+[programs.devnet]
 programs_arena = "CCnPxPLd4GbxycDTcP12KP98rWtjKCCNcZC4hqHCB1KV"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+#cluster = "Localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

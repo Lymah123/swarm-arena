@@ -6,11 +6,29 @@ declare_id!("CCnPxPLd4GbxycDTcP12KP98rWtjKCCNcZC4hqHCB1KV");
 pub enum ArenaError {
     #[msg("Score overflow")]
     ScoreOverflow,
+    #[msg("Agent name too long")]
+    NameTooLong,
 }
 
 #[program]
 pub mod arena {
     use super::*;
+
+    pub fn create_agent(
+        ctx: Context<CreateAgent>,
+        name: String,
+    ) -> Result<()> {
+        require!(name.len() <= 32, ArenaError::NameTooLong);
+
+        let agent = &mut ctx.accounts.agent_identity;
+        agent.owner = ctx.accounts.signer.key();
+        agent.name = name.clone();
+        agent.registered_at = Clock::get()?.unix_timestamp;
+        agent.bump = ctx.bumps.agent_identity;
+
+        msg!("Agent '{}' registered by {}", name, ctx.accounts.signer.key());
+        Ok(())
+    }
 
     pub fn log_episode(
         ctx: Context<LogEpisode>,
@@ -25,7 +43,6 @@ pub mod arena {
         log.timestamp = Clock::get()?.unix_timestamp;
 
         let rep = &mut ctx.accounts.agent_reputation;
-        // Initialize agent reputation on first creation
         if rep.agent == Pubkey::default() {
             rep.agent = ctx.accounts.signer.key();
             rep.total_score = 0;
@@ -47,6 +64,23 @@ pub mod arena {
         );
         Ok(())
     }
+}
+
+#[derive(Accounts)]
+#[instruction(name: String)]
+pub struct CreateAgent<'info> {
+    #[account(
+        init,
+        payer = signer,
+        space = 8 + 32 + 4 + 32 + 8 + 1,
+        seeds = [b"agent", signer.key().as_ref()],
+        bump
+    )]
+    pub agent_identity: Account<'info, AgentIdentity>,
+
+    #[account(mut)]
+    pub signer: Signer<'info>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
@@ -73,6 +107,14 @@ pub struct LogEpisode<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
     pub system_program: Program<'info, System>,
+}
+
+#[account]
+pub struct AgentIdentity {
+    pub owner: Pubkey,
+    pub name: String,
+    pub registered_at: i64,
+    pub bump: u8,
 }
 
 #[account]

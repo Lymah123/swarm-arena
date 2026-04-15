@@ -9,6 +9,7 @@ pub fn spawn_world(mut commands: Commands) {
         Score::default(),
         Action::Stay,
     ));
+    crate::systems::on_chain::register_agent("swarm-agent-0", "~/.config/solana/id.json");
 
     // spawn agent 1
     commands.spawn((

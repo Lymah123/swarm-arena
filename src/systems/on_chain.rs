@@ -1,5 +1,6 @@
 use crate::events::EpisodeEnd;
 use bevy::prelude::*;
+use sha2::{Sha256, Digest};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::{
     commitment_config::CommitmentConfig,
@@ -80,5 +81,67 @@ pub fn commit_episode(mut events: EventReader<EpisodeEnd>) {
             Ok(sig) => println!("Episode {} committed! Sig: {}", ep.episode_id, sig),
             Err(e) => eprintln!("Transaction failed: {}", e),
         }
+    }
+}
+
+pub fn register_agent(name: &str, keypair_path: &str) {
+    let client = RpcClient::new_with_commitment(
+        RPC_URL.to_string(),
+        CommitmentConfig::confirmed(),
+    );
+    let keypair = match read_keypair_file(&*shellexpand::tilde(keypair_path)) {
+        Ok(k) => k,
+        Err(e) => { eprintln!("Failed to read keypair: {}", e); return; }
+    };
+
+    let program_id = Pubkey::from_str(PROGRAM_ID).unwrap();
+    
+    let (agent_pda, _) = Pubkey::find_program_address(
+        &[b"agent", keypair.pubkey().as_ref()],
+        &program_id,
+    );
+    let node = format!("global:create_agent");
+    let hash = {
+        use std::collections::hash_map::DefaultHasher;
+        let crypto = |s: &str| {
+            use sha2::{Sha256, Digest};
+            let mut h = Sha256::new();
+            h.update(s.as_bytes());
+            h.finalize()
+        };
+        crypto(&node)
+    };
+    let discriminator: [u8; 8] = hash[..8].try_into().unwrap();
+
+    let name_bytes = name.as_bytes();
+    let mut data = discriminator.to_vec();
+    data.extend_from_slice(&(name_bytes.len() as u32).to_le_bytes());
+    data.extend_from_slice(name_bytes);
+
+    let ix = Instruction {
+        program_id,
+        accounts: vec![
+            AccountMeta::new(agent_pda, false),
+            AccountMeta::new(keypair.pubkey(), true),
+            AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+        ],
+        data,
+    };
+
+    let recent_blockhash = match client.get_latest_blockhash() {
+        Ok(bh) => bh,
+        Err(e) => { eprintln!("Failed to get blockhash: {}", e); return; }
+    };
+
+    let tx = Transaction::new_signed_with_payer(
+        &[ix],
+        Some(&keypair.pubkey()),
+        &[&keypair],
+        recent_blockhash,
+    );
+
+    match client.send_and_confirm_transaction(&tx) {
+        Ok(sig) => println!("Agent '{}' registered on-chain! Sig: {}", name, sig),
+        Err(e) => eprintln!("Agent registration failed: {}", e),
     }
 }

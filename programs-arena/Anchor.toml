@@ -11,7 +11,7 @@ programs_arena = "CCnPxPLd4GbxycDTcP12KP98rWtjKCCNcZC4hqHCB1KV"
 url = "https://api.apr.dev"
 
 [provider]
-#cluster = "Localnet"
+#cluster = "localnet"
 cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 

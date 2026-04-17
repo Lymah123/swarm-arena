@@ -1,4 +1,5 @@
 [toolchain]
+anchor_version = "0.31.0"
 
 [features]
 resolution = true
@@ -11,8 +12,7 @@ programs_arena = "CCnPxPLd4GbxycDTcP12KP98rWtjKCCNcZC4hqHCB1KV"
 url = "https://api.apr.dev"
 
 [provider]
-#cluster = "localnet"
-cluster = "devnet"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

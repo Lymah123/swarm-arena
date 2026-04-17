@@ -7,7 +7,7 @@ describe("swarm-arena", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
-  const program = anchor.workspace.ProgramsArena as any;
+  const program = anchor.workspace.Arena as any;
   const signer = provider.wallet;
 
   let agentPda: PublicKey;

@@ -70,7 +70,7 @@ pub mod arena {
 #[instruction(name: String)]
 pub struct CreateAgent<'info> {
     #[account(
-        init,
+        init_if_needed,
         payer = signer,
         space = 8 + 32 + 4 + 32 + 8 + 1,
         seeds = [b"agent", signer.key().as_ref()],

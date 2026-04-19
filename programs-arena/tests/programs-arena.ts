@@ -99,4 +99,48 @@ describe("swarm-arena", () => {
     assert.equal(rep.episodesPlayed, 2);
     console.log("After 2 episodes — total score:", rep.totalScore.toNumber());
   });
+
+  it("finalizes an episode and releases reward", async () => {
+    const episodeId = new anchor.BN(2);
+    const [ep2Pda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("episode"), Buffer.from(episodeId.toArray("le", 8))],
+      program.programId
+    );
+    const [rep2Pda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("reputation"), signer.publicKey.toBuffer()],
+      program.programId
+    );
+
+    // log episode first
+    await program.methods
+      .logEpisode(episodeId, [new anchor.BN(8), new anchor.BN(2)], Array(32).fill(3))
+      .accounts({
+        episodeLog: ep2Pda,
+        agentReputation: rep2Pda,
+        signer: signer.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .rpc();
+
+    const balanceBefore = await provider.connection.getBalance(signer.publicKey);
+
+    // finalize with threshold of 5
+    const tx = await program.methods
+      .finalizeEpisode(new anchor.BN(5))
+      .accounts({
+        episodeLog: ep2Pda,
+        rewardVault: signer.publicKey,
+        signer: signer.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .rpc();
+
+    console.log("finalize_episode tx:", tx);
+
+    const log = await program.account.episodeLog.fetch(ep2Pda);
+    assert.equal(log.finalized, true);
+    console.log("Episode finalized:", log.episodeId.toNumber(), "winner score:", Math.max(...log.scores.map((s: any) => s.toNumber())));
+  });
 });
+
+  

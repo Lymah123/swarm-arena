@@ -14,7 +14,7 @@ impl Default for EpisodeState {
         Self {
             tick: 0,
             max_ticks: 200,
-            episode_id: 0,
+            episode_id: 10000,
             done: false,
         }
     }

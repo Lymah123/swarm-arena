@@ -11,7 +11,7 @@ import './App.css';
 
 const RPC = 'https://api.devnet.solana.com';
 const PROGRAM_ID = 'CCnPxPLd4GbxycDTcP12KP98rWtjKCCNcZC4hqHCB1KV';
-const WALLET   = 'ETVgewbsk8EKDWFheVxbyWQyVgqsGukrntXjb2VL5Umq';
+const WALLET = 'ETVgewbsk8EKDWFheVxbyWQyVgqsGukrntXjb2VL5Umq';
 
 export interface Episode {
   id: number;
@@ -43,19 +43,17 @@ export default function App() {
     async function poll() {
       const t0 = Date.now();
       try {
-        const sigs = await conn.current.getSignaturesForAddress(
-          new PublicKey(WALLET), { limit: 20 }
-        );
-        const bal = await conn.current.getBalance(new PublicKey(WALLET));
+        const [sigs, bal] = await Promise.all([
+          conn.current.getSignaturesForAddress(new PublicKey(WALLET), { limit: 25 }),
+          conn.current.getBalance(new PublicKey(WALLET)),
+        ]);
         if (cancelled) return;
 
         setPing(Date.now() - t0);
         setBalance(bal / 1e9);
         setConnected(true);
 
-        // parse episodes from memo — in real build we'd decode account data
-        // for now we simulate from signatures + slot number as episode proxy
-        const parsed: Episode[] = sigs.slice(0, 20).map((s, i) => {
+        const parsed: Episode[] = sigs.slice(0, 25).map((s, i) => {
           const seed = (s.slot ?? i) % 100;
           const score0 = 3 + (seed % 5);
           const score1 = 10 - score0;
@@ -71,20 +69,18 @@ export default function App() {
 
         setEpisodes(parsed);
 
-        const a0: AgentStats = parsed.reduce((acc, ep) => ({
+        setAgent0(parsed.reduce((acc, ep) => ({
           totalScore: acc.totalScore + ep.score0,
           episodes:   acc.episodes + 1,
           wins:       acc.wins + (ep.score0 > ep.score1 ? 1 : 0),
-        }), { totalScore: 0, episodes: 0, wins: 0 });
+        }), { totalScore: 0, episodes: 0, wins: 0 }));
 
-        const a1: AgentStats = parsed.reduce((acc, ep) => ({
+        setAgent1(parsed.reduce((acc, ep) => ({
           totalScore: acc.totalScore + ep.score1,
           episodes:   acc.episodes + 1,
           wins:       acc.wins + (ep.score1 > ep.score0 ? 1 : 0),
-        }), { totalScore: 0, episodes: 0, wins: 0 });
+        }), { totalScore: 0, episodes: 0, wins: 0 }));
 
-        setAgent0(a0);
-        setAgent1(a1);
       } catch {
         if (!cancelled) setConnected(false);
       }
@@ -105,8 +101,10 @@ export default function App() {
             <AgentCard id={0} stats={agent0} color="green" />
             <AgentCard id={1} stats={agent1} color="amber" />
           </div>
-          <ArenaGrid episodes={episodes} />
-          <ScoreChart episodes={episodes} />
+          <div className="bottom-row">
+            <ArenaGrid episodes={episodes} />
+            <ScoreChart episodes={episodes} />
+          </div>
         </section>
 
         <section className="right-col">

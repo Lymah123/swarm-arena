@@ -13,6 +13,7 @@ describe("swarm-arena", () => {
   let agentPda: PublicKey;
   let reputationPda: PublicKey;
   let episodePda: PublicKey;
+  let vaultPda: PublicKey;
 
   before(async () => {
     [agentPda] = PublicKey.findProgramAddressSync(
@@ -27,6 +28,29 @@ describe("swarm-arena", () => {
       [Buffer.from("episode"), Buffer.from(new anchor.BN(0).toArray("le", 8))],
       program.programId
     );
+    [vaultPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("vault")],
+      program.programId
+    );
+
+    // Initialize vault with 10 SOL for rewards
+    try {
+      const tx = await program.methods
+        .initVault(new anchor.BN(10 * anchor.web3.LAMPORTS_PER_SOL))
+        .accounts({
+          rewardVault: vaultPda,
+          signer: signer.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        })
+        .rpc();
+      console.log("Vault initialized:", tx);
+    } catch (e: any) {
+      // Vault might already be initialized
+      if (!e.message.includes("already in use")) {
+        throw e;
+      }
+      console.log("Vault already initialized");
+    }
   });
 
   it("registers an agent on-chain", async () => {
@@ -126,10 +150,10 @@ describe("swarm-arena", () => {
 
     // finalize with threshold of 5
     const tx = await program.methods
-      .finalizeEpisode(new anchor.BN(5))
+      .finalizeEpisode(episodeId, new anchor.BN(5))
       .accounts({
         episodeLog: ep2Pda,
-        rewardVault: signer.publicKey,
+        rewardVault: vaultPda,
         signer: signer.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
       })
@@ -143,4 +167,4 @@ describe("swarm-arena", () => {
   });
 });
 
-  
+

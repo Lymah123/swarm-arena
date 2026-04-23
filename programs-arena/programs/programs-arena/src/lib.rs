@@ -25,7 +25,11 @@ pub mod arena {
         agent.name = name.clone();
         agent.registered_at = Clock::get()?.unix_timestamp;
         agent.bump = ctx.bumps.agent_identity;
-        msg!("Agent '{}' registered by {}", name, ctx.accounts.signer.key());
+        msg!(
+            "Agent '{}' registered by {}",
+            name,
+            ctx.accounts.signer.key()
+        );
         Ok(())
     }
 
@@ -55,12 +59,37 @@ pub mod arena {
             .ok_or(error!(ArenaError::ScoreOverflow))?;
         rep.episodes_played += 1;
 
-        msg!("Episode {} logged - scores: [{}, {}]", episode_id, scores[0], scores[1]);
+        msg!(
+            "Episode {} logged - scores: [{}, {}]",
+            episode_id,
+            scores[0],
+            scores[1]
+        );
+        Ok(())
+    }
+
+    pub fn init_vault(ctx: Context<InitVault>, initial_funding: u64) -> Result<()> {
+        // Transfer lamports from signer to vault
+        let signer = &ctx.accounts.signer;
+        let vault = &ctx.accounts.reward_vault;
+
+        let from = signer.to_account_info();
+        let to = vault.to_account_info();
+
+        **from.try_borrow_mut_lamports()? -= initial_funding;
+        **to.try_borrow_mut_lamports()? += initial_funding;
+
+        msg!(
+            "Vault initialized at {} with {} lamports funded",
+            vault.key(),
+            initial_funding
+        );
         Ok(())
     }
 
     pub fn finalize_episode(
         ctx: Context<FinalizeEpisode>,
+        episode_id: u64,
         score_threshold: u64,
     ) -> Result<()> {
         let log = &mut ctx.accounts.episode_log;
@@ -72,7 +101,7 @@ pub mod arena {
 
         log.finalized = true;
 
-        // transfer reward lamports to winner (signer for now)
+        // transfer reward from vault to winner
         let reward_lamports = 1_000_000; // 0.001 SOL
         let from = ctx.accounts.reward_vault.to_account_info();
         let to = ctx.accounts.signer.to_account_info();
@@ -81,7 +110,7 @@ pub mod arena {
         **to.try_borrow_mut_lamports()? += reward_lamports;
 
         msg!(
-            "Episode {} finalized — winner score: {} — reward: {} lamports",
+            "Episode {} finalized — winner score: {} — reward from vault: {} lamports",
             log.episode_id,
             winner_score,
             reward_lamports
@@ -131,15 +160,35 @@ pub struct LogEpisode<'info> {
 }
 
 #[derive(Accounts)]
+pub struct InitVault<'info> {
+    #[account(
+        init,
+        payer = signer,
+        space = 8,
+        seeds = [b"vault"],
+        bump
+    )]
+    pub reward_vault: Account<'info, RewardVault>,
+    #[account(mut)]
+    pub signer: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(episode_id: u64)]
 pub struct FinalizeEpisode<'info> {
     #[account(
         mut,
-        seeds = [b"episode", episode_log.episode_id.to_le_bytes().as_ref()],
+        seeds = [b"episode", episode_id.to_le_bytes().as_ref()],
         bump
     )]
     pub episode_log: Account<'info, EpisodeLog>,
-    #[account(mut)]
-    pub reward_vault: SystemAccount<'info>,
+    #[account(
+        mut,
+        seeds = [b"vault"],
+        bump
+    )]
+    pub reward_vault: Account<'info, RewardVault>,
     #[account(mut)]
     pub signer: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -168,4 +217,10 @@ pub struct AgentReputation {
     pub total_score: u64,
     pub episodes_played: u32,
     pub bump: u8,
+}
+
+#[account]
+pub struct RewardVault {
+    // Empty account used as a PDA to hold lamports
+    // Lamports are stored directly on the account, not in a field
 }

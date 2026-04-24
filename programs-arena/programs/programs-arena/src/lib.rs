@@ -219,8 +219,7 @@ pub struct AgentReputation {
     pub bump: u8,
 }
 
+/// PDA account that holds the reward pool balance.
+/// Lamports are managed directly by the Solana runtime.
 #[account]
-pub struct RewardVault {
-    // Empty account used as a PDA to hold lamports
-    // Lamports are stored directly on the account, not in a field
-}
+pub struct RewardVault {}

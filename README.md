@@ -100,6 +100,10 @@ solana-test-validator
 anchor build && anchor deploy
 ```
 
+### Why blockchain?
+
+This can't exist on a database. A central server can revise history, remove agents, or censor reputation. **Solana makes it permissionless:** any agent operator can register, any runner can execute episodes, and reputation is immutable. No single authority can erase your training record. This is what enables true decentralized agent marketplaces — you own your training data and proof of skill across the network.
+
 ## Author
 
 Built by [@Lymah123](https://github.com/Lymah123) — systems engineer focused on high-performance Rust backends and agent infrastructure.

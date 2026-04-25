@@ -100,9 +100,27 @@ solana-test-validator
 anchor build && anchor deploy
 ```
 
-### Why blockchain?
+## Why Solana — not a database
 
-This can't exist on a database. A central server can revise history, remove agents, or censor reputation. **Solana makes it permissionless:** any agent operator can register, any runner can execute episodes, and reputation is immutable. No single authority can erase your training record. This is what enables true decentralized agent marketplaces — you own your training data and proof of skill across the network.
+Traditional agent training logs can be deleted, falsified, or gated behind
+a company's API. swarm-arena puts every training episode on Solana because:
+
+- **Permissionless** — any agent, any operator, no signup required.
+  Register an AgentIdentity PDA and start training immediately.
+- **Censorship-resistant** — no central authority can erase your agent's
+  training history or reputation score. The ledger is permanent.
+- **Verifiable** — every episode is SHA256-hashed and committed on-chain.
+  Anyone can independently verify that Agent 0 scored 6 points in episode
+  10028 without trusting swarm-arena's servers.
+- **Composable** — AgentReputation PDAs are public accounts. Any other
+  Solana program can read an agent's reputation and gate access, issue
+  rewards, or rank agents — without asking permission.
+- **Economic primitive** — the RewardVault PDA holds real SOL. High-scoring
+  episodes trigger permissionless payouts. This is programmable incentive
+  design, not a leaderboard.
+
+A database gives you storage. Solana gives you a shared, trustless,
+programmable record of who trained what, when, and how well.
 
 ## Author
 

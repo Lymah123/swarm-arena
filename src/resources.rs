@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use rand::Rng;
 use serde::Serialize;
 
 #[derive(Resource, Debug)]
@@ -37,11 +38,26 @@ pub struct GridWorld {
 
 impl GridWorld {
     pub fn new(width: i32, height: i32) -> Self {
-        let resources = vec![
-            (2, 2), (5, 5), (7, 3), (1, 8), (9, 1),
-            (4, 6), (6, 4), (3, 7), (8, 8), (0, 5),
-        ];
-        Self { width, height, resources }
+        let mut rng = rand::thread_rng();
+        let num_resources = 10;
+        let mut resources = Vec::new();
+
+        // Generate random unique resource positions
+        while resources.len() < num_resources {
+            let x = rng.gen_range(0..width);
+            let y = rng.gen_range(0..height);
+            let pos = (x, y);
+
+            if !resources.contains(&pos) {
+                resources.push(pos);
+            }
+        }
+
+        Self {
+            width,
+            height,
+            resources,
+        }
     }
 
     pub fn in_bounds(&self, x: i32, y: i32) -> bool {

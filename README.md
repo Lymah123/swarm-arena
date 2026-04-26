@@ -8,6 +8,12 @@ Built for the [Agentic SWARM Hackathon](https://swarm.thecanteenapp.com/) by Can
 
 ____________________________________________________
 
+## Live Demo
+
+**Dashboard:** https://arena-ui-pi.vercel.app  
+**Program ID:** `CCnPxPLd4GbxycDTcP12KP98rWtjKCCNcZC4hqHCB1KV` (Solana devnet)  
+**First tx:** https://explorer.solana.com/tx/38yieCpWNbex4RDEzXw8pEREHYQNswyW9hYBHXZmigLP9FEmp8FSpDAwPNvU3dcZuY5RrUdWRp6EJcjYJUcEoL21?cluster=devnet
+
 ## What this is?
 
 Most agent training happens in private, centralized environments. Results are self-reported, memory is ephemeral, and there's no way to verify what an agent actually did across sessions.
@@ -61,6 +67,28 @@ https://explorer.solana.com/tx/38yieCpWNbex4RDEzXw8pEREHYQNswyW9hYBHXZmigLP9FEmp
 Program ID: `CCnPxPLd4GbxycDTcP12KP98rWtjKCCNcZC4hqHCB1KV`  
 Network: Solana devnet
 
+## Why Solana — not a database
+
+Traditional agent training logs can be deleted, falsified, or gated behind
+a company's API. swarm-arena puts every training episode on Solana because:
+
+- **Permissionless** — any agent, any operator, no signup required.
+  Register an AgentIdentity PDA and start training immediately.
+- **Censorship-resistant** — no central authority can erase your agent's
+  training history or reputation score. The ledger is permanent.
+- **Verifiable** — every episode is SHA256-hashed and committed on-chain.
+  Anyone can independently verify that Agent 0 scored 6 points in episode
+  10028 without trusting swarm-arena's servers.
+- **Composable** — AgentReputation PDAs are public accounts. Any other
+  Solana program can read an agent's reputation and gate access, issue
+  rewards, or rank agents — without asking permission.
+- **Economic primitive** — the RewardVault PDA holds real SOL. High-scoring
+  episodes trigger permissionless payouts. This is programmable incentive
+  design, not a leaderboard.
+
+A database gives you storage. Solana gives you a shared, trustless,
+programmable record of who trained what, when, and how well.
+
 ## Build Status
 
 - [x] Bevy grid environment
@@ -99,28 +127,6 @@ solana-test-validator
 # Deploy Anchor program
 anchor build && anchor deploy
 ```
-
-## Why Solana — not a database
-
-Traditional agent training logs can be deleted, falsified, or gated behind
-a company's API. swarm-arena puts every training episode on Solana because:
-
-- **Permissionless** — any agent, any operator, no signup required.
-  Register an AgentIdentity PDA and start training immediately.
-- **Censorship-resistant** — no central authority can erase your agent's
-  training history or reputation score. The ledger is permanent.
-- **Verifiable** — every episode is SHA256-hashed and committed on-chain.
-  Anyone can independently verify that Agent 0 scored 6 points in episode
-  10028 without trusting swarm-arena's servers.
-- **Composable** — AgentReputation PDAs are public accounts. Any other
-  Solana program can read an agent's reputation and gate access, issue
-  rewards, or rank agents — without asking permission.
-- **Economic primitive** — the RewardVault PDA holds real SOL. High-scoring
-  episodes trigger permissionless payouts. This is programmable incentive
-  design, not a leaderboard.
-
-A database gives you storage. Solana gives you a shared, trustless,
-programmable record of who trained what, when, and how well.
 
 ## Author
 

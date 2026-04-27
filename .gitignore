@@ -3,3 +3,8 @@
 programs-arena/target/
 programs-arena/node_modules/
 programs-arena/.anchor/
+
+# Frontend dependencies and build output
+arena-ui/node_modules/
+arena-ui/build/
+arena-ui/.env.local

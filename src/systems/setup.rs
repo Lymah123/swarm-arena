@@ -1,23 +1,15 @@
-use bevy::prelude::*;
 use crate::components::*;
+use crate::resources::WalletRegistry;
+use crate::systems::wallet_manager::WalletConnections;
+use bevy::prelude::*;
 
-pub fn spawn_world(mut commands: Commands) {
-    // spawn agent 0
-    commands.spawn((
-        AgentId(0),
-        Position::new(0, 0),
-        Score::default(),
-        Action::Stay,
-    ));
-    crate::systems::on_chain::register_agent("swarm-agent-0", "~/.config/solana/id.json");
+pub fn spawn_world(mut wallet_connections: ResMut<WalletConnections>) {
+    // Initialize default demo agents
+    let wallet0 = "9B5X4h3X7kX8vX9kX0X1X2X3X4X5X6X7X8X9XaX0".to_string();
+    let wallet1 = "ETVgewbsk8EKDWFheVxbyWQyVgqsGukrntXjb2VL5Umq".to_string();
 
-    // spawn agent 1
-    commands.spawn((
-        AgentId(1),
-        Position::new(9, 9),
-        Score::default(),
-        Action::Stay,
-    ));
+    wallet_connections.request_agent(wallet0);
+    wallet_connections.request_agent(wallet1);
 
-    println!("Arena ready — 2 agents spawned on 10x10 grid");
+    println!("Arena initializing — waiting for wallet connections...");
 }

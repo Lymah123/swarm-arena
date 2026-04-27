@@ -4,3 +4,4 @@ pub mod movement;
 pub mod rewards;
 pub mod episode;
 pub mod on_chain;
+pub mod wallet_manager;

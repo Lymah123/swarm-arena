@@ -12,11 +12,32 @@ pub enum ArenaError {
     AlreadyFinalized,
     #[msg("Score threshold not met")]
     ThresholdNotMet,
+    #[msg("Wallet already registered")]
+    WalletAlreadyRegistered,
+    #[msg("Agent ID out of range")]
+    AgentIdOutOfRange,
 }
 
 #[program]
 pub mod arena {
     use super::*;
+
+    pub fn register_wallet(ctx: Context<RegisterWallet>, agent_id: u8) -> Result<()> {
+        require!(agent_id < 255, ArenaError::AgentIdOutOfRange);
+
+        let wallet_entry = &mut ctx.accounts.wallet_entry;
+        wallet_entry.wallet = ctx.accounts.signer.key();
+        wallet_entry.agent_id = agent_id;
+        wallet_entry.registered_at = Clock::get()?.unix_timestamp;
+        wallet_entry.bump = ctx.bumps.wallet_entry;
+
+        msg!(
+            "Wallet {} registered for agent #{}",
+            ctx.accounts.signer.key(),
+            agent_id
+        );
+        Ok(())
+    }
 
     pub fn create_agent(ctx: Context<CreateAgent>, name: String) -> Result<()> {
         require!(name.len() <= 32, ArenaError::NameTooLong);
@@ -117,6 +138,22 @@ pub mod arena {
         );
         Ok(())
     }
+}
+
+#[derive(Accounts)]
+#[instruction(agent_id: u8)]
+pub struct RegisterWallet<'info> {
+    #[account(
+        init_if_needed,
+        payer = signer,
+        space = 8 + 32 + 1 + 8 + 1,
+        seeds = [b"wallet", signer.key().as_ref()],
+        bump
+    )]
+    pub wallet_entry: Account<'info, WalletRegistry>,
+    #[account(mut)]
+    pub signer: Signer<'info>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
@@ -223,3 +260,12 @@ pub struct AgentReputation {
 /// Lamports are managed directly by the Solana runtime.
 #[account]
 pub struct RewardVault {}
+
+/// Associates a wallet with an agent ID for multi-user support
+#[account]
+pub struct WalletRegistry {
+    pub wallet: Pubkey,
+    pub agent_id: u8,
+    pub registered_at: i64,
+    pub bump: u8,
+}

@@ -1,5 +1,8 @@
 use bevy::prelude::*;
 
+#[derive(Component, Debug, Clone)]
+pub struct Wallet(pub String);
+
 #[derive(Component, Debug, Clone, Copy, PartialEq)]
 pub struct Position {
     pub x: i32,

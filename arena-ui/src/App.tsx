@@ -1,17 +1,28 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { Connection, PublicKey } from '@solana/web3.js';
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
+import {
+  ConnectionProvider,
+  WalletProvider,
+} from '@solana/wallet-adapter-react';
+import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
+import {
+  PhantomWalletAdapter,
+  SolflareWalletAdapter,
+} from '@solana/wallet-adapter-wallets';
+import '@solana/wallet-adapter-react-ui/styles.css';
 import Header from './components/Header';
 import AgentCard from './components/AgentCard';
 import LiveFeed from './components/LiveFeed';
 import ScoreChart from './components/ScoreChart';
 import StatsBar from './components/StatsBar';
 import ArenaGrid from './components/ArenaGrid';
+import WalletButton from './components/WalletButton';
 import './index.css';
 import './App.css';
 
 const RPC = 'https://api.devnet.solana.com';
 const PROGRAM_ID = 'CCnPxPLd4GbxycDTcP12KP98rWtjKCCNcZC4hqHCB1KV';
-const WALLET = 'ETVgewbsk8EKDWFheVxbyWQyVgqsGukrntXjb2VL5Umq';
 
 export interface Episode {
   id: number;
@@ -26,16 +37,24 @@ export interface AgentStats {
   totalScore: number;
   episodes: number;
   wins: number;
+  wallet: string;
+  agentId: number;
+  position: { x: number; y: number };
 }
 
-export default function App() {
-  const [episodes, setEpisodes]   = useState<Episode[]>([]);
-  const [agent0, setAgent0]       = useState<AgentStats>({ totalScore: 0, episodes: 0, wins: 0 });
-  const [agent1, setAgent1]       = useState<AgentStats>({ totalScore: 0, episodes: 0, wins: 0 });
-  const [balance, setBalance]     = useState<number>(0);
-  const [ping, setPing]           = useState<number>(0);
+function AppContent() {
+  const [episodes, setEpisodes] = useState<Episode[]>([]);
+  const [agents, setAgents] = useState<Map<string, AgentStats>>(new Map());
+  const [balance, setBalance] = useState<number>(0);
+  const [ping, setPing] = useState<number>(0);
   const [connected, setConnected] = useState(false);
   const conn = useRef(new Connection(RPC, 'confirmed'));
+
+  // Demo agents for initial load
+  const DEMO_AGENTS = [
+    '9B5X4h3X7kX8vX9kX0X1X2X3X4X5X6X7X8X9XaX0',
+    'ETVgewbsk8EKDWFheVxbyWQyVgqsGukrntXjb2VL5Umq',
+  ];
 
   useEffect(() => {
     let cancelled = false;
@@ -44,9 +63,13 @@ export default function App() {
       const t0 = Date.now();
       try {
         const [sigs, bal] = await Promise.all([
-          conn.current.getSignaturesForAddress(new PublicKey(WALLET), { limit: 25 }),
-          conn.current.getBalance(new PublicKey(WALLET)),
+          conn.current.getSignaturesForAddress(
+            new PublicKey(DEMO_AGENTS[0]),
+            { limit: 25 }
+          ),
+          conn.current.getBalance(new PublicKey(DEMO_AGENTS[0])),
         ]);
+
         if (cancelled) return;
 
         setPing(Date.now() - t0);
@@ -69,18 +92,25 @@ export default function App() {
 
         setEpisodes(parsed);
 
-        setAgent0(parsed.reduce((acc, ep) => ({
-          totalScore: acc.totalScore + ep.score0,
-          episodes:   acc.episodes + 1,
-          wins:       acc.wins + (ep.score0 > ep.score1 ? 1 : 0),
-        }), { totalScore: 0, episodes: 0, wins: 0 }));
-
-        setAgent1(parsed.reduce((acc, ep) => ({
-          totalScore: acc.totalScore + ep.score1,
-          episodes:   acc.episodes + 1,
-          wins:       acc.wins + (ep.score1 > ep.score0 ? 1 : 0),
-        }), { totalScore: 0, episodes: 0, wins: 0 }));
-
+        // Initialize demo agents
+        const agentMap = new Map<string, AgentStats>();
+        DEMO_AGENTS.forEach((wallet, idx) => {
+          const agentEpisodes = parsed;
+          agentMap.set(wallet, {
+            totalScore: agentEpisodes.reduce(
+              (sum, ep) => sum + (idx === 0 ? ep.score0 : ep.score1),
+              0
+            ),
+            episodes: agentEpisodes.length,
+            wins: agentEpisodes.filter((ep) =>
+              idx === 0 ? ep.score0 > ep.score1 : ep.score1 > ep.score0
+            ).length,
+            wallet,
+            agentId: idx,
+            position: { x: idx === 0 ? 0 : 9, y: idx === 0 ? 0 : 9 },
+          });
+        });
+        setAgents(agentMap);
       } catch {
         if (!cancelled) setConnected(false);
       }
@@ -88,18 +118,36 @@ export default function App() {
 
     poll();
     const id = setInterval(poll, 5000);
-    return () => { cancelled = true; clearInterval(id); };
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
   }, []);
+
+  const agentsList = Array.from(agents.values());
 
   return (
     <div className="app">
       <Header programId={PROGRAM_ID} balance={balance} connected={connected} />
 
+      <div style={{ padding: '10px', display: 'flex', gap: '10px' }}>
+        <WalletButton />
+        <span style={{ color: '#666', fontSize: '12px' }}>
+          {agents.size} agents active
+        </span>
+      </div>
+
       <main className="main-grid">
         <section className="left-col">
           <div className="agents-row">
-            <AgentCard id={0} stats={agent0} color="green" />
-            <AgentCard id={1} stats={agent1} color="amber" />
+            {agentsList.slice(0, 2).map((agent) => (
+              <AgentCard
+                key={agent.wallet}
+                id={agent.agentId}
+                stats={agent}
+                color={agent.agentId === 0 ? 'green' : 'amber'}
+              />
+            ))}
           </div>
           <div className="bottom-row">
             <ArenaGrid episodes={episodes} />
@@ -119,5 +167,25 @@ export default function App() {
         programId={PROGRAM_ID}
       />
     </div>
+  );
+}
+
+export default function App() {
+  const network = WalletAdapterNetwork.Devnet;
+  const endpoint = RPC;
+
+  const wallets = useMemo(
+    () => [new PhantomWalletAdapter(), new SolflareWalletAdapter()],
+    []
+  );
+
+  return (
+    <ConnectionProvider endpoint={endpoint}>
+      <WalletProvider wallets={wallets} autoConnect>
+        <WalletModalProvider>
+          <AppContent />
+        </WalletModalProvider>
+      </WalletProvider>
+    </ConnectionProvider>
   );
 }

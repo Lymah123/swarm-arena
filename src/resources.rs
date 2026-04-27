@@ -1,6 +1,53 @@
 use bevy::prelude::*;
 use rand::Rng;
 use serde::Serialize;
+use std::collections::HashMap;
+
+#[derive(Resource, Debug)]
+pub struct WalletRegistry {
+    /// Maps wallet address (Solana pubkey string) to agent ID
+    pub wallet_to_agent: HashMap<String, u8>,
+    /// Maps agent ID to wallet address
+    pub agent_to_wallet: HashMap<u8, String>,
+    /// Next available agent ID
+    pub next_agent_id: u8,
+}
+
+impl Default for WalletRegistry {
+    fn default() -> Self {
+        Self {
+            wallet_to_agent: HashMap::new(),
+            agent_to_wallet: HashMap::new(),
+            next_agent_id: 0,
+        }
+    }
+}
+
+impl WalletRegistry {
+    pub fn register_agent(&mut self, wallet: String) -> u8 {
+        if let Some(agent_id) = self.wallet_to_agent.get(&wallet) {
+            *agent_id
+        } else {
+            let agent_id = self.next_agent_id;
+            self.wallet_to_agent.insert(wallet.clone(), agent_id);
+            self.agent_to_wallet.insert(agent_id, wallet);
+            self.next_agent_id += 1;
+            agent_id
+        }
+    }
+
+    pub fn get_agent_for_wallet(&self, wallet: &str) -> Option<u8> {
+        self.wallet_to_agent.get(wallet).copied()
+    }
+
+    pub fn get_wallet_for_agent(&self, agent_id: u8) -> Option<&str> {
+        self.agent_to_wallet.get(&agent_id).map(|s| s.as_str())
+    }
+
+    pub fn agent_count(&self) -> u8 {
+        self.next_agent_id
+    }
+}
 
 #[derive(Resource, Debug)]
 pub struct EpisodeState {

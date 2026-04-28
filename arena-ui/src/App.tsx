@@ -60,12 +60,15 @@ function AppContent() {
     async function poll() {
       const t0 = Date.now();
       try {
+        console.log('Polling with program ID:', PROGRAM_ID);
         // Query program account directly instead of using invalid DEMO_AGENTS
         const programPK = new PublicKey(PROGRAM_ID);
+        console.log('Program PK created:', programPK.toBase58());
         const sigs = await conn.current.getSignaturesForAddress(
           programPK,
           { limit: 25 }
         );
+        console.log('Fetched signatures:', sigs.length);
 
         if (cancelled) return;
 
@@ -108,7 +111,8 @@ function AppContent() {
           });
         });
         setAgents(agentMap);
-      } catch {
+      } catch (err) {
+        console.error('Poll error:', err);
         if (!cancelled) setConnected(false);
       }
     }

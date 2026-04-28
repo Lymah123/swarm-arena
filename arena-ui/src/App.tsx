@@ -66,16 +66,19 @@ function AppContent() {
         // Query program account directly instead of using invalid DEMO_AGENTS
         const programPK = new PublicKey(PROGRAM_ID);
         console.log('Program PK created:', programPK.toBase58());
-        const sigs = await conn.current.getSignaturesForAddress(
-          programPK,
-          { limit: 25 }
-        );
+        const [sigs, bal] = await Promise.all([
+          conn.current.getSignaturesForAddress(
+            programPK,
+            { limit: 25 }
+          ),
+          conn.current.getBalance(programPK),
+        ]);
         console.log('Fetched signatures:', sigs.length);
 
         if (cancelled) return;
 
         setPing(Date.now() - t0);
-        setBalance(0);
+        setBalance(bal / 1e9);
         setConnected(true);
 
         const parsed: Episode[] = sigs.slice(0, 25).map((s, i) => {

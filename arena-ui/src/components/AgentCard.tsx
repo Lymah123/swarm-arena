@@ -1,4 +1,5 @@
 import { AgentStats } from '../App';
+import { Link } from 'react-router-dom';
 
 interface Props {
   id: number;
@@ -13,47 +14,57 @@ export default function AgentCard({ id, stats, color }: Props) {
     : '0.0';
 
   return (
-    <div style={{
-      padding: '20px 24px',
-      background: 'var(--surface)',
-      borderTop: `2px solid ${c}`,
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
+    <Link
+      to={`/agent/${id}`}
+      style={{ textDecoration: 'none', display: 'block', cursor: 'pointer' }}
+    >
       <div style={{
-        position: 'absolute', top: 0, right: 0,
-        width: 80, height: 80,
-        background: c,
-        opacity: 0.03,
-        borderRadius: '0 0 0 80px',
-      }} />
-
-      <div style={{
-        fontFamily: 'var(--display)',
-        fontSize: 10, fontWeight: 700,
-        letterSpacing: '0.2em',
-        color: 'var(--text-dim)',
-        marginBottom: 8,
-      }}>AGENT {id}</div>
-
-      <div style={{
-        fontFamily: 'var(--display)',
-        fontSize: 42, fontWeight: 800,
-        color: c, lineHeight: 1,
-        marginBottom: 16,
+        padding: '20px 24px',
+        background: 'var(--surface)',
+        borderTop: `2px solid ${c}`,
+        position: 'relative',
+        overflow: 'hidden',
+        transition: 'background 200ms',
+      }} onMouseEnter={(e) => {
+        (e.currentTarget as HTMLDivElement).style.background = 'var(--surface-hover)' || 'rgba(255,255,255,0.02)';
+      }} onMouseLeave={(e) => {
+        (e.currentTarget as HTMLDivElement).style.background = 'var(--surface)';
       }}>
-        {stats.totalScore}
-        <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-dim)', marginLeft: 6 }}>
-          pts
-        </span>
-      </div>
+        <div style={{
+          position: 'absolute', top: 0, right: 0,
+          width: 80, height: 80,
+          background: c,
+          opacity: 0.03,
+          borderRadius: '0 0 0 80px',
+        }} />
 
-      <div style={{ display: 'flex', gap: 24 }}>
-        <Stat label="EPISODES" value={stats.episodes} />
-        <Stat label="WINS" value={stats.wins} />
-        <Stat label="WIN RATE" value={`${winRate}%`} />
+        <div style={{
+          fontFamily: 'var(--display)',
+          fontSize: 10, fontWeight: 700,
+          letterSpacing: '0.2em',
+          color: 'var(--text-dim)',
+          marginBottom: 8,
+        }}>AGENT {id}</div>
+
+        <div style={{
+          fontFamily: 'var(--display)',
+          fontSize: 42, fontWeight: 800,
+          color: c, lineHeight: 1,
+          marginBottom: 16,
+        }}>
+          {stats.totalScore}
+          <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-dim)', marginLeft: 6 }}>
+            pts
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', gap: 24 }}>
+          <Stat label="EPISODES" value={stats.episodes} />
+          <Stat label="WINS" value={stats.wins} />
+          <Stat label="WIN RATE" value={`${winRate}%`} />
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }
 

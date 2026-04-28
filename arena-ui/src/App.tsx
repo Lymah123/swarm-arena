@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { Connection, PublicKey } from '@solana/web3.js';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import {
   ConnectionProvider,
   WalletProvider,
@@ -16,6 +17,9 @@ import LiveFeed from './components/LiveFeed';
 import ScoreChart from './components/ScoreChart';
 import StatsBar from './components/StatsBar';
 import ArenaGrid from './components/ArenaGrid';
+import WalletButton from './components/WalletButton';
+import Footer from './components/Footer';
+import AgentDetails from './pages/AgentDetails';
 import './index.css';
 import './App.css';
 
@@ -46,6 +50,7 @@ function AppContent() {
   const [balance, setBalance] = useState<number>(0);
   const [ping, setPing] = useState<number>(0);
   const [connected, setConnected] = useState(false);
+  const [lastEpisodeTime, setLastEpisodeTime] = useState<number>(Date.now());
   const conn = useRef(new Connection(RPC, 'confirmed'));
 
   console.log('AppContent mounted, RPC:', RPC);
@@ -69,7 +74,7 @@ function AppContent() {
         const [sigs, bal] = await Promise.all([
           conn.current.getSignaturesForAddress(
             programPK,
-            { limit: 25 }
+            { limit: 100 }
           ),
           conn.current.getBalance(programPK),
         ]);
@@ -79,9 +84,8 @@ function AppContent() {
 
         setPing(Date.now() - t0);
         setBalance(bal / 1e9);
-        setConnected(true);
 
-        const parsed: Episode[] = sigs.slice(0, 25).map((s, i) => {
+        const parsed: Episode[] = sigs.map((s, i) => {
           const seed = (s.slot ?? i) % 100;
           const score0 = 3 + (seed % 5);
           const score1 = 10 - score0;
@@ -96,6 +100,17 @@ function AppContent() {
         });
 
         setEpisodes(parsed);
+
+        // Check if backend is actively running: last episode within 30 seconds
+        if (parsed.length > 0) {
+          const mostRecentEpisodeTime = (parsed[0].ts || 0) * 1000;
+          setLastEpisodeTime(mostRecentEpisodeTime);
+          const timeSinceLast = Date.now() - mostRecentEpisodeTime;
+          const isBackendActive = timeSinceLast < 30000; // 30 seconds
+          setConnected(isBackendActive);
+        } else {
+          setConnected(false);
+        }
 
         // Initialize demo agents
         const agentMap = new Map<string, AgentStats>();
@@ -165,6 +180,8 @@ function AppContent() {
         connected={connected}
         programId={PROGRAM_ID}
       />
+
+      <Footer />
     </div>
   );
 }
@@ -178,12 +195,17 @@ export default function App() {
   );
 
   return (
-    <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
-        <WalletModalProvider>
-          <AppContent />
-        </WalletModalProvider>
-      </WalletProvider>
-    </ConnectionProvider>
+    <BrowserRouter>
+      <ConnectionProvider endpoint={endpoint}>
+        <WalletProvider wallets={wallets} autoConnect>
+          <WalletModalProvider>
+            <Routes>
+              <Route path="/" element={<AppContent />} />
+              <Route path="/agent/:agentId" element={<AgentDetails />} />
+            </Routes>
+          </WalletModalProvider>
+        </WalletProvider>
+      </ConnectionProvider>
+    </BrowserRouter>
   );
 }

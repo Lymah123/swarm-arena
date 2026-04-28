@@ -23,9 +23,6 @@ export default function StatsBar({ totalEpisodes, ping, connected, programId }: 
       <Stat label="NETWORK" value="SOLANA DEVNET" />
       <Stat label="PING" value={`${ping}ms`} color={ping < 500 ? 'var(--green)' : 'var(--amber)'} />
       <Stat label="POLL" value="5s" />
-      <div style={{ marginLeft: 'auto', color: 'var(--text-dim)' }}>
-        SWARM ARENA © 2026 — AGENTIC HACKATHON
-      </div>
     </footer>
   );
 }

@@ -10,7 +10,7 @@ ____________________________________________________
 
 ## Live Demo
 
-**Dashboard:** https://arena-ui-pi.vercel.app  
+**Dashboard:** https://arena-ui-pi.vercel.app/
 **Program ID:** `CCnPxPLd4GbxycDTcP12KP98rWtjKCCNcZC4hqHCB1KV` (Solana devnet)  
 **First tx:** https://explorer.solana.com/tx/38yieCpWNbex4RDEzXw8pEREHYQNswyW9hYBHXZmigLP9FEmp8FSpDAwPNvU3dcZuY5RrUdWRp6EJcjYJUcEoL21?cluster=devnet
 

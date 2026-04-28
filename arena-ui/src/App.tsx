@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import {
   ConnectionProvider,
   WalletProvider,
@@ -17,7 +16,6 @@ import LiveFeed from './components/LiveFeed';
 import ScoreChart from './components/ScoreChart';
 import StatsBar from './components/StatsBar';
 import ArenaGrid from './components/ArenaGrid';
-import WalletButton from './components/WalletButton';
 import './index.css';
 import './App.css';
 
@@ -51,10 +49,10 @@ function AppContent() {
   const conn = useRef(new Connection(RPC, 'confirmed'));
 
   // Demo agents for initial load
-  const DEMO_AGENTS = [
+  const DEMO_AGENTS = useMemo(() => [
     '9B5X4h3X7kX8vX9kX0X1X2X3X4X5X6X7X8X9XaX0',
     'ETVgewbsk8EKDWFheVxbyWQyVgqsGukrntXjb2VL5Umq',
-  ];
+  ], []);
 
   useEffect(() => {
     let cancelled = false;
@@ -122,20 +120,13 @@ function AppContent() {
       cancelled = true;
       clearInterval(id);
     };
-  }, []);
+  }, [DEMO_AGENTS]);
 
   const agentsList = Array.from(agents.values());
 
   return (
     <div className="app">
       <Header programId={PROGRAM_ID} balance={balance} connected={connected} />
-
-      <div style={{ padding: '10px', display: 'flex', gap: '10px' }}>
-        <WalletButton />
-        <span style={{ color: '#666', fontSize: '12px' }}>
-          {agents.size} agents active
-        </span>
-      </div>
 
       <main className="main-grid">
         <section className="left-col">
@@ -171,7 +162,6 @@ function AppContent() {
 }
 
 export default function App() {
-  const network = WalletAdapterNetwork.Devnet;
   const endpoint = RPC;
 
   const wallets = useMemo(

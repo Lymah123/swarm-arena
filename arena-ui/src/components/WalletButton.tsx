@@ -2,50 +2,59 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 
 export default function WalletButton() {
- const { connected, publicKey, disconnect } = useWallet();
- const { setVisible } = useWalletModal();
+  const { connected, publicKey, disconnect } = useWallet();
+  const { setVisible } = useWalletModal();
 
- return (
-  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-   {connected && publicKey ? (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-     <span style={{ fontSize: '12px', color: '#0f0', fontFamily: 'monospace' }}>
-      {publicKey.toString().slice(0, 8)}...
-     </span>
-     <button
-      onClick={() => disconnect()}
-      style={{
-       padding: '6px 12px',
-       backgroundColor: '#222',
-       color: '#0f0',
-       border: '1px solid #0f0',
-       borderRadius: '4px',
-       cursor: 'pointer',
-       fontSize: '12px',
-       fontFamily: 'monospace',
-      }}
-     >
-      Disconnect
-     </button>
-    </div>
-   ) : (
+  if (connected && publicKey) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{
+          fontSize: 11,
+          color: 'var(--green)',
+          fontFamily: 'var(--mono)',
+          border: '1px solid var(--green-dim)',
+          padding: '2px 8px',
+          borderRadius: 2,
+        }}>
+          {publicKey.toString().slice(0, 4)}...{publicKey.toString().slice(-4)}
+        </span>
+        <button
+          onClick={() => disconnect()}
+          style={{
+            padding: '3px 10px',
+            background: 'transparent',
+            color: 'var(--text-dim)',
+            border: '1px solid var(--border)',
+            borderRadius: 2,
+            cursor: 'pointer',
+            fontSize: 10,
+            fontFamily: 'var(--mono)',
+            letterSpacing: '0.1em',
+          }}
+        >
+          DISCONNECT
+        </button>
+      </div>
+    );
+  }
+
+  return (
     <button
-     onClick={() => setVisible(true)}
-     style={{
-      padding: '8px 16px',
-      backgroundColor: '#0f0',
-      color: '#000',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      fontSize: '12px',
-      fontWeight: 'bold',
-      fontFamily: 'monospace',
-     }}
+      onClick={() => setVisible(true)}
+      style={{
+        padding: '4px 14px',
+        background: 'var(--green)',
+        color: '#000',
+        border: 'none',
+        borderRadius: 2,
+        cursor: 'pointer',
+        fontSize: 11,
+        fontWeight: 700,
+        fontFamily: 'var(--mono)',
+        letterSpacing: '0.1em',
+      }}
     >
-     Connect Wallet
+      CONNECT WALLET
     </button>
-   )}
-  </div>
- );
+  );
 }

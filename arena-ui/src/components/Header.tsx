@@ -1,3 +1,5 @@
+import WalletButton from './WalletButton';
+
 interface Props {
   programId: string;
   balance: number;
@@ -58,6 +60,8 @@ export default function Header({ programId, balance, connected }: Props) {
         <span style={{ color: 'var(--text-dim)', fontSize: 11 }}>
           {balance.toFixed(4)} SOL
         </span>
+
+        <WalletButton />
 
         <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{

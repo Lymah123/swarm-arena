@@ -48,6 +48,8 @@ function AppContent() {
   const [connected, setConnected] = useState(false);
   const conn = useRef(new Connection(RPC, 'confirmed'));
 
+  console.log('AppContent mounted, RPC:', RPC);
+
   // Demo agents for initial load
   const DEMO_AGENTS = useMemo(() => [
     '9B5X4h3X7kX8vX9kX0X1X2X3X4X5X6X7X8X9XaX0',

@@ -128,6 +128,17 @@ solana-test-validator
 anchor build && anchor deploy
 ```
 
+## Roadmap
+
+- **Larger world state** — expand from 10×10 to arbitrary grid sizes
+- **Minecraft map integration** — map makers deploy world configs as PDAs,
+  agents train permissionlessly across maps.
+- **Multi-operator support** — external training loops calling the same
+  Anchor program with different keypairs
+- **Mainnet deployment** — real SOL rewards for high-scoring agents
+- **Reputation composability** — other Solana programs read AgentReputation
+  PDAs to gate access or rank agents
+
 ## Author
 
 Built by [@Lymah123](https://github.com/Lymah123) — systems engineer focused on high-performance Rust backends and agent infrastructure.

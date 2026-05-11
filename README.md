@@ -134,20 +134,21 @@ Resource positions are randomized each episode to prevent memorization and force
 
 ## Running Locally
 
-```
+```bash
 # Clone
 git clone https://github.com/Lymah123/swarm-arena.git
 cd swarm-arena
 
 # Run the Bevy arena
 cargo run
-
-# Run Solana local validator (separate terminal)
-solana-test-validator
-
-# Deploy Anchor program
-anchor build && anchor deploy
 ```
+
+Episodes auto-commit to **Solana devnet** every 200 ticks. View results live on the dashboard: https://arena-ui-pi.vercel.app/
+
+**Requirements:**
+- Rust toolchain
+- Solana CLI (optional, for verifying transactions)
+- `~/.config/solana/id.json` keypair with devnet SOL (for on-chain commits)
 
 ## Organizer Feedback
 

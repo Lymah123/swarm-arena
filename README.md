@@ -2,7 +2,7 @@
 
 A permissionless, on-chain agent training arena built in Rust.
 
-Agents compete in a Bevy-powered grid environment. At the end of each episode, results are committed to Solana — making agent training verifiable, tamper-proof, and composable with on-chain reputation and payment primitives.
+Agents compete in a Bevy-powered grid environment. At the end of each episode, results are committed to Solana, making agent training verifiable, tamper-proof, and composable with on-chain reputation and payment primitives.
 
 Built for the [Agentic SWARM Hackathon](https://swarm.thecanteenapp.com/) by Canteen × Colosseum.
 
@@ -11,8 +11,12 @@ ____________________________________________________
 ## Live Demo
 
 **Dashboard:** https://arena-ui-pi.vercel.app/
-**Program ID:** `CCnPxPLd4GbxycDTcP12KP98rWtjKCCNcZC4hqHCB1KV` (Solana devnet)  
+
+**Article:** [Read on Dev.to](https://dev.to/lymah/i-built-a-permissionless-on-chain-agent-training-arena-on-solana-in-3-weeks-2on2)
+
 **First tx:** https://explorer.solana.com/tx/38yieCpWNbex4RDEzXw8pEREHYQNswyW9hYBHXZmigLP9FEmp8FSpDAwPNvU3dcZuY5RrUdWRp6EJcjYJUcEoL21?cluster=devnet
+
+----------------------------------------------------------
 
 ## What this is?
 
@@ -32,19 +36,14 @@ Most agent training happens in private, centralized environments. Results are se
 ```
 Bevy arena (Rust/ECS)
   └── agents tick, act, collect rewards
-  └── episode ends → result serialised
-
-        ↓ compile to WASM
-
-Episode runner
-  └── scores computed
-  └── episode state hashed
+  └── episode ends → scores + state hashed (SHA256)
 
         ↓ commit on-chain
 
 Solana program (Anchor)
-  └── EpisodeLog account — immutable episode record
+  └── EpisodeLog PDA      — immutable episode record
   └── AgentReputation PDA — cumulative score per agent
+  └── RewardVault PDA     — holds SOL, releases on finalization
 ```
 
 ---------------------------------------------------
@@ -61,7 +60,7 @@ Solana program (Anchor)
 
 ## Live on-chain evidence
 
-First devnet transaction — episode 35 committed and finalized:
+First devnet transaction — episode 10000 committed and confirmed:
 https://explorer.solana.com/tx/38yieCpWNbex4RDEzXw8pEREHYQNswyW9hYBHXZmigLP9FEmp8FSpDAwPNvU3dcZuY5RrUdWRp6EJcjYJUcEoL21?cluster=devnet
 
 Program ID: `CCnPxPLd4GbxycDTcP12KP98rWtjKCCNcZC4hqHCB1KV`  
@@ -89,22 +88,47 @@ a company's API. swarm-arena puts every training episode on Solana because:
 A database gives you storage. Solana gives you a shared, trustless,
 programmable record of who trained what, when, and how well.
 
+-------------------------------------------
+
+## The Agents Actually Learn
+
+Agent 0 uses Q-learning. Agent 1 uses a heuristic (Manhattan distance to nearest resource). The learning curve:
+
+| Episodes | Agent 0 avg reward |
+|----------|-------------------|
+| 1-10     | 0.10              |
+| 11-20    | 0.20              |
+| 21-30    | 2.10              |
+| 31-40    | 5.10              |
+| 41-50    | 6.50+             |
+
+By episode 42, Agent 0 collected 8/10 resources; beating the heuristic agent. Every step of this learning curve is committed to devnet. The blockchain is the training log.
+Resource positions are randomized each episode to prevent memorization and force genuine generalization.
+
+## Resources
+
+**Dashboard:** https://arena-ui-pi.vercel.app/
+**Demo Video:** [Watch on Loom](https://www.loom.com/share/b948ec7ef0ee4f0aa467d8b9b7699335)
+
 ## Build Status
 
 - [x] Bevy grid environment
-- [ ] Episode loop (tick -> score -> end)
-- [ ] WASM compilation via Trunk
-- [ ] Solana program (Anchor)
-- [ ] On-chain episode commit
-- [ ] Agent reputation PDA
-- [ ] Devnet deployment
+- [x] Episode loop (tick → score → end)
+- [x] Solana program (Anchor) — 4/4 integration tests passing
+- [x] On-chain episode commit
+- [x] Agent reputation PDA
+- [x] RewardVault PDA — permissionless SOL payouts
+- [x] Devnet deployment — 100+ episodes committed
+- [x] Q-learning agent — avg reward 0.10 → 6.50+ over 50 episodes
+- [x] Live dashboard — arena-ui-pi.vercel.app
+- [x] Wallet connect — Phantom + Solflare
 
 ## Weekly status
 
-- **Week 1 (Apr 6–12)**: Environment setup — Rust, Bevy, Anchor, Trunk. Goal: dummy episode hash committed to local Solana validator.
-- **Week 2 (Apr 13–19)**: Build the Bevy arena. Two-agent grid world, ECS episode loop, reward signals.
-- **Week 3 (Apr 20–26)**: On-chain integration. Episode results → Solana devnet. Agent reputation PDA live.
-- **Week 4 (Apr 27–May 11)**: Polish, demo, submission.
+- **Week 1 (Apr 6–12)**: Environment setup — Rust, Bevy, Anchor. First dummy episode hash committed to local Solana validator.
+- **Week 2 (Apr 13–19)**: Bevy arena built. Two-agent grid world, ECS episode loop, reward signals. Q-learning added to Agent 0.
+- **Week 3 (Apr 20–26)**: On-chain integration. Episode results → Solana devnet. Agent reputation PDA live. First confirmed devnet transaction.
+- **Week 4 (Apr 27–May 11)**: Live dashboard deployed, Phantom + Solflare wallet connect, article published, demo video recorded. Submitted.
 
 ------------------------------------
 
@@ -115,11 +139,8 @@ programmable record of who trained what, when, and how well.
 git clone https://github.com/Lymah123/swarm-arena.git
 cd swarm-arena
 
-# Run the Bevy arena (native)
+# Run the Bevy arena
 cargo run
-
-# Build to WASM
-trunk build
 
 # Run Solana local validator (separate terminal)
 solana-test-validator
@@ -128,17 +149,21 @@ solana-test-validator
 anchor build && anchor deploy
 ```
 
+## Organizer Feedback
+
+> "Perhaps if you scale up the world size, you could apply it to Minecraft maps? Would be an awesome demo, and there are Minecraft map makers out there that might love to give it a go." — aadi, Canteen hackathon organizer
+
 ## Roadmap
 
 - **Larger world state** — expand from 10×10 to arbitrary grid sizes
-- **Minecraft map integration** — map makers deploy world configs as PDAs,
-  agents train permissionlessly across maps.
-- **Multi-operator support** — external training loops calling the same
-  Anchor program with different keypairs
+- **Minecraft map integration** — map makers deploy world configs as PDAs, agents train permissionlessly across maps
+- **Multi-operator support** — external training loops calling the same Anchor program with different keypairs
 - **Mainnet deployment** — real SOL rewards for high-scoring agents
-- **Reputation composability** — other Solana programs read AgentReputation
-  PDAs to gate access or rank agents
+- **Reputation composability** — other Solana programs read `AgentReputation` PDAs to gate access or rank agents
+- **Neural network policies** — replace tabular Q-learning with a small MLP, model hash stored on-chain
 
 ## Author
 
 Built by [@Lymah123](https://github.com/Lymah123) — systems engineer focused on high-performance Rust backends and agent infrastructure.
+
+Find me in the [Canteen Discord](https://discord.gg/canteen) if you want to run your own agent against the program.

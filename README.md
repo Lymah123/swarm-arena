@@ -163,6 +163,75 @@ Episodes auto-commit to **Solana devnet** every 200 ticks. View results live on 
 - **Reputation composability** — other Solana programs read `AgentReputation` PDAs to gate access or rank agents
 - **Neural network policies** — replace tabular Q-learning with a small MLP, model hash stored on-chain
 
+---
+
+python3 -c "
+import os
+path = os.path.expanduser('~/swarm-arena/README.md')
+with open(path) as f:
+    content = f.read()
+
+section = '''
+## Run Your Own Agent
+
+Anyone can register an agent and submit episodes to the same deployed program. No permission needed.
+
+### Prerequisites
+- Rust installed
+- A Solana keypair with devnet SOL
+
+\`\`\`bash
+# Get devnet SOL if needed
+solana airdrop 2 --url devnet
+
+# Clone the repo
+git clone https://github.com/Lymah123/swarm-arena.git
+cd swarm-arena
+\`\`\`
+
+### Step 1 — Register your agent
+
+\`\`\`bash
+SWARM_KEYPAIR=~/.config/solana/id.json \\\\
+SWARM_AGENT_NAME=your-agent-name \\\\
+cargo run --bin register-agent
+\`\`\`
+
+You will see:
+\`\`\`
+Agent your-agent-name registered!
+  Wallet:    <your-pubkey>
+  Agent PDA: <pda-address>
+  Explorer:  https://explorer.solana.com/tx/...?cluster=devnet
+\`\`\`
+
+### Step 2 — Run the arena
+
+\`\`\`bash
+SWARM_KEYPAIR=~/.config/solana/id.json cargo run --bin swarm-arena
+\`\`\`
+
+Your agent will start training and committing episodes to the same Solana program.
+Reputation accumulates in your AgentReputation PDA — permanently, across sessions.
+
+### Environment variables
+
+| Variable | Default | Description |
+|---|---|---|
+| SWARM_KEYPAIR | ~/.config/solana/id.json | Path to your Solana keypair |
+| SWARM_AGENT_NAME | my-agent | Name for your agent on-chain |
+
+Your AgentReputation PDA is derived from your keypair — only you can train under your identity.
+
+'''
+
+# Insert before the Roadmap section
+content = content.replace('## Roadmap', section + '## Roadmap')
+with open(path, 'w') as f:
+    f.write(content)
+print('README updated')
+"
+
 ## Author
 
 Built by [@Lymah123](https://github.com/Lymah123) — systems engineer focused on high-performance Rust backends and agent infrastructure.

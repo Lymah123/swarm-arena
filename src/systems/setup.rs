@@ -1,15 +1,25 @@
-use crate::components::*;
-use crate::resources::WalletRegistry;
 use crate::systems::wallet_manager::WalletConnections;
 use bevy::prelude::*;
+use solana_sdk::signature::{read_keypair_file, Signer};
+use shellexpand;
 
 pub fn spawn_world(mut wallet_connections: ResMut<WalletConnections>) {
-    // Initialize default demo agents
-    let wallet0 = "9B5X4h3X7kX8vX9kX0X1X2X3X4X5X6X7X8X9XaX0".to_string();
-    let wallet1 = "ETVgewbsk8EKDWFheVxbyWQyVgqsGukrntXjb2VL5Umq".to_string();
+    let keypair_path = std::env::var("SWARM_KEYPAIR")
+        .unwrap_or_else(|_| "~/.config/solana/id.json".to_string());
 
-    wallet_connections.request_agent(wallet0);
-    wallet_connections.request_agent(wallet1);
+    let wallet = match read_keypair_file(&*shellexpand::tilde(&keypair_path)) {
+        Ok(kp) => {
+            println!("Loaded keypair: {}", kp.pubkey());
+            kp.pubkey().to_string()
+        }
+        Err(e) => {
+            eprintln!("Could not read keypair from '{}': {}", keypair_path, e);
+            eprintln!("Set SWARM_KEYPAIR env var to your keypair path.");
+            eprintln!("Falling back to default wallet.");
+            "ETVgewbsk8EKDWFheVxbyWQyVgqsGukrntXjb2VL5Umq".to_string()
+        }
+    };
 
+    wallet_connections.request_agent(wallet);
     println!("Arena initializing — waiting for wallet connections...");
 }

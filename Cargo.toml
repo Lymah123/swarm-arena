@@ -3,6 +3,14 @@ name = "swarm-arena"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "swarm-arena"
+path = "src/main.rs"
+
+[[bin]]
+name = "register-agent"
+path = "src/bin/register_agent.rs"
+
 [dependencies]
 bevy = { version = "0.15", default-features = false, features = [
     "bevy_core_pipeline",

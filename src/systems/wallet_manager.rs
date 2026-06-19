@@ -64,7 +64,7 @@ pub fn process_wallet_registrations(
         // Register on-chain
         crate::systems::on_chain::register_agent(
             &format!("agent-{}", agent_id),
-            "~/.config/solana/id.json",
+            &std::env::var("SWARM_KEYPAIR").unwrap_or_else(|_| "~/.config/solana/id.json".to_string()),
         );
 
         println!("New agent #{} registered for wallet: {}", agent_id, wallet);

@@ -21,7 +21,7 @@ pub fn commit_episode(mut events: EventReader<EpisodeEnd>) {
         let client =
             RpcClient::new_with_commitment(RPC_URL.to_string(), CommitmentConfig::confirmed());
 
-        let keypair = match read_keypair_file(&*shellexpand::tilde("~/.config/solana/id.json")) {
+        let keypair = match read_keypair_file(&*shellexpand::tilde(&std::env::var("SWARM_KEYPAIR").unwrap_or_else(|_| "~/.config/solana/id.json".to_string()))) {
             Ok(k) => k,
             Err(e) => {
                 eprintln!("Failed to read keypair: {}", e);

@@ -165,13 +165,15 @@ Episodes auto-commit to **Solana devnet** every 200 ticks. View results live on 
 
 ---
 
-python3 -c "
+```python3 -c "
 import os
 path = os.path.expanduser('~/swarm-arena/README.md')
 with open(path) as f:
     content = f.read()
 
 section = '''
+```
+
 ## Run Your Own Agent
 
 Anyone can register an agent and submit episodes to the same deployed program. No permission needed.
@@ -180,6 +182,7 @@ Anyone can register an agent and submit episodes to the same deployed program. N
 - Rust installed
 - A Solana keypair with devnet SOL
 
+```
 \`\`\`bash
 # Get devnet SOL if needed
 solana airdrop 2 --url devnet
@@ -211,6 +214,7 @@ Agent your-agent-name registered!
 SWARM_KEYPAIR=~/.config/solana/id.json cargo run --bin swarm-arena
 \`\`\`
 
+```
 Your agent will start training and committing episodes to the same Solana program.
 Reputation accumulates in your AgentReputation PDA — permanently, across sessions.
 
@@ -223,14 +227,12 @@ Reputation accumulates in your AgentReputation PDA — permanently, across sessi
 
 Your AgentReputation PDA is derived from your keypair — only you can train under your identity.
 
-'''
-
 # Insert before the Roadmap section
-content = content.replace('## Roadmap', section + '## Roadmap')
+```content = content.replace('## Roadmap', section + '## Roadmap')
 with open(path, 'w') as f:
     f.write(content)
 print('README updated')
-"
+```
 
 ## Author
 

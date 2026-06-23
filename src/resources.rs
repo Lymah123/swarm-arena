@@ -5,11 +5,8 @@ use std::collections::HashMap;
 
 #[derive(Resource, Debug)]
 pub struct WalletRegistry {
-    /// Maps wallet address (Solana pubkey string) to agent ID
     pub wallet_to_agent: HashMap<String, u8>,
-    /// Maps agent ID to wallet address
     pub agent_to_wallet: HashMap<u8, String>,
-    /// Next available agent ID
     pub next_agent_id: u8,
 }
 
@@ -76,7 +73,7 @@ impl EpisodeState {
     }
 }
 
-#[derive(Resource, Debug)]
+#[derive(Resource, Debug, Clone)]
 pub struct GridWorld {
     pub width: i32,
     pub height: i32,
@@ -88,23 +85,61 @@ impl GridWorld {
         let mut rng = rand::thread_rng();
         let num_resources = ((width * height) / 10).max(10).min(50) as usize;
         let mut resources = Vec::new();
-
-        // Generate random unique resource positions
         while resources.len() < num_resources {
             let x = rng.gen_range(0..width);
             let y = rng.gen_range(0..height);
             let pos = (x, y);
-
             if !resources.contains(&pos) {
                 resources.push(pos);
             }
         }
+        Self { width, height, resources }
+    }
 
-        Self {
-            width,
-            height,
-            resources,
+    pub fn from_map_file(map_path: &str) -> Result<Self, String> {
+        let raw = std::fs::read_to_string(map_path)
+            .map_err(|e| format!("Could not read map file {}: {}", map_path, e))?;
+
+        let lines: Vec<&str> = raw
+            .lines()
+            .filter(|l| !l.starts_with('#') && !l.trim().is_empty())
+            .collect();
+
+        if lines.is_empty() {
+            return Err("Map file is empty".to_string());
         }
+
+        let width = lines[0].len() as i32;
+        let height = lines.len() as i32;
+
+        for (i, line) in lines.iter().enumerate() {
+            if line.len() as i32 != width {
+                return Err(format!(
+                    "Line {} has width {} but expected {}",
+                    i + 1, line.len(), width
+                ));
+            }
+        }
+
+        let mut resources = Vec::new();
+        for (y, line) in lines.iter().enumerate() {
+            for (x, ch) in line.chars().enumerate() {
+                match ch {
+                    'R' => resources.push((x as i32, y as i32)),
+                    '.' => {}
+                    other => return Err(format!(
+                        "Unknown character '{}' at ({}, {})", other, x, y
+                    )),
+                }
+            }
+        }
+
+        if resources.is_empty() {
+            return Err("Map has no resource positions (R)".to_string());
+        }
+
+        println!("Loaded map: {}x{} with {} resources", width, height, resources.len());
+        Ok(Self { width, height, resources })
     }
 
     pub fn in_bounds(&self, x: i32, y: i32) -> bool {

@@ -13,7 +13,16 @@ fn main() {
         .add_event::<events::EpisodeEnd>()
         .add_event::<events::AgentRegistered>()
         .insert_resource(resources::EpisodeState::default())
-        .insert_resource(resources::GridWorld::new(10, 10))
+        .insert_resource({
+            let size = std::env::var("SWARM_GRID_SIZE")
+                .ok()
+                .and_then(|s| s.parse::<i32>().ok())
+                .unwrap_or(10)
+                .max(5)
+                .min(100);
+            println!("Grid size: {}x{}", size, size);
+            resources::GridWorld::new(size, size)
+        })
         .insert_resource(resources::WalletRegistry::default())
         .insert_resource(wallet_manager::WalletConnections::default())
         .insert_resource(qtable::QTable::default())

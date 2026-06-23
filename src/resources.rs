@@ -86,7 +86,7 @@ pub struct GridWorld {
 impl GridWorld {
     pub fn new(width: i32, height: i32) -> Self {
         let mut rng = rand::thread_rng();
-        let num_resources = 10;
+        let num_resources = ((width * height) / 10).max(10).min(50) as usize;
         let mut resources = Vec::new();
 
         // Generate random unique resource positions

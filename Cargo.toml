@@ -8,6 +8,10 @@ name = "swarm-arena"
 path = "src/main.rs"
 
 [[bin]]
+name = "minecraft-converter"
+path = "src/bin/minecraft_converter.rs"
+
+[[bin]]
 name = "register-agent"
 path = "src/bin/register_agent.rs"
 
@@ -27,6 +31,9 @@ solana-sdk = "1.18"
 anchor-client = "0.30.1"
 anchor-lang = "0.30.1"
 shellexpand = "2.1"
+
+fastnbt = "2.3"
+flate2 = "1.0"
 
 [profile.dev]
 opt-level = 1

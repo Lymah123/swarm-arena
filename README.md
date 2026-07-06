@@ -224,6 +224,7 @@ Reputation accumulates in your AgentReputation PDA — permanently, across sessi
 |---|---|---|
 | SWARM_KEYPAIR | ~/.config/solana/id.json | Path to your Solana keypair |
 | SWARM_AGENT_NAME | my-agent | Name for your agent on-chain |
+| SWARM_GRID_SIZE | 10 | Grid size (5–100). Resources scale automatically |
 
 Your AgentReputation PDA is derived from your keypair — only you can train under your identity.
 

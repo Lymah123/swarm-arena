@@ -78,6 +78,7 @@ pub struct GridWorld {
     pub width: i32,
     pub height: i32,
     pub resources: Vec<(i32, i32)>,
+    pub walls: Vec<(i32, i32)>,
 }
 
 impl GridWorld {
@@ -93,7 +94,7 @@ impl GridWorld {
                 resources.push(pos);
             }
         }
-        Self { width, height, resources }
+        Self { width, height, resources, walls: Vec::new() }
     }
 
     pub fn from_map_file(map_path: &str) -> Result<Self, String> {
@@ -102,7 +103,7 @@ impl GridWorld {
 
         let lines: Vec<&str> = raw
             .lines()
-            .filter(|l| !l.starts_with('#') && !l.trim().is_empty())
+            .filter(|l| !l.starts_with("//") && !l.trim().is_empty())
             .collect();
 
         if lines.is_empty() {
@@ -122,11 +123,13 @@ impl GridWorld {
         }
 
         let mut resources = Vec::new();
+        let mut walls = Vec::new();
         for (y, line) in lines.iter().enumerate() {
             for (x, ch) in line.chars().enumerate() {
                 match ch {
                     'R' => resources.push((x as i32, y as i32)),
                     '.' => {}
+                    '#' => walls.push((x as i32, y as i32)),
                     other => return Err(format!(
                         "Unknown character '{}' at ({}, {})", other, x, y
                     )),
@@ -138,8 +141,12 @@ impl GridWorld {
             return Err("Map has no resource positions (R)".to_string());
         }
 
-        println!("Loaded map: {}x{} with {} resources", width, height, resources.len());
-        Ok(Self { width, height, resources })
+        println!("Loaded map: {}x{} with {} resources, {} walls", width, height, resources.len(), walls.len());
+        Ok(Self { width, height, resources, walls })
+    }
+
+    pub fn is_wall(&self, x: i32, y: i32) -> bool {
+        self.walls.contains(&(x, y))
     }
 
     pub fn in_bounds(&self, x: i32, y: i32) -> bool {
@@ -156,7 +163,9 @@ impl GridWorld {
     }
 
     pub fn reset(&mut self) {
+        let walls = self.walls.clone();
         *self = GridWorld::new(self.width, self.height);
+        self.walls = walls;
     }
 }
 

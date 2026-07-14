@@ -40,11 +40,16 @@ pub fn process_wallet_registrations(
         // Register new agent
         let agent_id = registry.register_agent(wallet.clone());
 
-        // Find a random starting position
+        // Find a random starting position that is not a wall
         use rand::Rng;
         let mut rng = rand::thread_rng();
-        let start_x = rng.gen_range(0..grid_world.width);
-        let start_y = rng.gen_range(0..grid_world.height);
+        let (start_x, start_y) = loop {
+            let x = rng.gen_range(0..grid_world.width);
+            let y = rng.gen_range(0..grid_world.height);
+            if !grid_world.is_wall(x, y) {
+                break (x, y);
+            }
+        };
 
         // Spawn the agent entity
         commands.spawn((

@@ -213,7 +213,7 @@ fn main() {
             } else if block == "minecraft:air" {
                 line.push('.');
             } else if is_wall(block) {
-                line.push('.');  // walls as passable for now, future: '#'
+                line.push('#');
                 wall_count += 1;
             } else {
                 line.push('.');

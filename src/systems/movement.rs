@@ -15,7 +15,7 @@ pub fn move_agents(
             Action::Stay  => (pos.x, pos.y),
         };
 
-        if grid.in_bounds(nx, ny) {
+        if grid.in_bounds(nx, ny) && !grid.is_wall(nx, ny) {
             pos.x = nx;
             pos.y = ny;
         }

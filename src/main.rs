@@ -1,6 +1,7 @@
 mod components;
 mod events;
 mod qtable;
+mod neural_policy;
 mod resources;
 mod systems;
 
@@ -37,6 +38,7 @@ fn main() {
         .insert_resource(resources::WalletRegistry::default())
         .insert_resource(wallet_manager::WalletConnections::default())
         .insert_resource(qtable::QTable::default())
+        .insert_resource(neural_policy::NeuralPolicy::default())
         .add_systems(Startup, setup::spawn_world)
         .add_systems(
             Update,

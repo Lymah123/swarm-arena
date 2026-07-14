@@ -21,5 +21,7 @@ pub fn spawn_world(mut wallet_connections: ResMut<WalletConnections>) {
     };
 
     wallet_connections.request_agent(wallet);
+    // Agent 1 — heuristic opponent for comparison
+    wallet_connections.request_agent("heuristic-agent-1".to_string());
     println!("Arena initializing — waiting for wallet connections...");
 }

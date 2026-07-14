@@ -4,6 +4,7 @@ use crate::components::{AgentId, Position, Score};
 use crate::resources::{EpisodeState, EpisodeResult, GridWorld};
 use crate::events::EpisodeEnd;
 use crate::qtable::QTable;
+use crate::neural_policy::NeuralPolicy;
 
 pub fn tick_episode(
     mut state: ResMut<EpisodeState>,
@@ -11,6 +12,7 @@ pub fn tick_episode(
     mut end_events: EventWriter<EpisodeEnd>,
     mut agents: Query<(&AgentId, &Position, &mut Score)>,
     mut qtable: ResMut<QTable>,
+    mut neural: ResMut<NeuralPolicy>,
 ) {
     if state.done { return; }
 
@@ -46,6 +48,17 @@ pub fn tick_episode(
         // bonus reward if agent 0 beat agent 1
         let win_bonus = if agent0_score > agent1_score { 2.0 } else { 0.0 };
 
+        // Record win bonus into neural trajectory if there is a pending step
+        if win_bonus > 0.0 {
+            if let (Some(prev_state), Some(prev_action)) =
+                (neural.last_state.clone(), neural.last_action_idx)
+            {
+                neural.record_step(prev_state, prev_action, win_bonus);
+                neural.last_state = None;
+                neural.last_action_idx = None;
+            }
+        }
+
         if let (Some(state_s), Some(action_i)) =
             (qtable.last_state, qtable.last_action_idx)
         {
@@ -53,6 +66,7 @@ pub fn tick_episode(
         }
 
         qtable.end_episode();
+        neural.update_on_episode_end();
 
         println!("\n--- Episode {} complete ---", state.episode_id);
         for (id, score) in &scores {

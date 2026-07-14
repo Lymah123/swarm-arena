@@ -2,11 +2,13 @@ use bevy::prelude::*;
 use crate::components::{Action, AgentId, Position};
 use crate::resources::GridWorld;
 use crate::qtable::QTable;
+use crate::neural_policy::NeuralPolicy;
 
 pub fn assign_actions(
     mut agents: Query<(&AgentId, &Position, &mut Action)>,
     grid: Res<GridWorld>,
     mut qtable: ResMut<QTable>,
+    mut neural: ResMut<NeuralPolicy>,
 ) {
     for (agent_id, pos, mut action) in &mut agents {
         if grid.resources.is_empty() {
@@ -18,6 +20,28 @@ pub fn assign_actions(
 
         match agent_id.0 {
             0 => {
+                // Agent 0: neural network policy (REINFORCE)
+                let state = NeuralPolicy::build_state(
+                    pos.x, pos.y,
+                    nearest.0, nearest.1,
+                    grid.width, grid.height,
+                    &grid.walls,
+                );
+
+                // Record previous step reward = 0 (resource rewards come via on_resource_collected)
+                if let (Some(prev_state), Some(prev_action)) =
+                    (neural.last_state.clone(), neural.last_action_idx)
+                {
+                    neural.record_step(prev_state, prev_action, 0.0);
+                }
+
+                let (action_idx, chosen) = neural.choose_action(&state);
+                neural.last_state = Some(state);
+                neural.last_action_idx = Some(action_idx);
+                *action = chosen;
+            }
+            1 => {
+                // Agent 1: Q-learning (kept for comparison)
                 let state = QTable::state_from_pos(pos.x, pos.y, nearest.0, nearest.1);
 
                 if let (Some(prev_state), Some(prev_action)) =
@@ -45,14 +69,35 @@ pub fn on_resource_collected(
     nearest_x: i32,
     nearest_y: i32,
     qtable: &mut QTable,
+    neural: &mut NeuralPolicy,
+    grid_width: i32,
+    grid_height: i32,
+    walls: &[(i32, i32)],
 ) {
-    if agent_id == 0 {
-        let state = QTable::state_from_pos(pos_x, pos_y, nearest_x, nearest_y);
-        if let (Some(prev_state), Some(prev_action)) =
-            (qtable.last_state, qtable.last_action_idx)
-        {
-            qtable.update(prev_state, prev_action, 1.0, state);
+    match agent_id {
+        0 => {
+            // Neural: record +1 reward for this step
+            let state = NeuralPolicy::build_state(
+                pos_x, pos_y, nearest_x, nearest_y,
+                grid_width, grid_height, walls,
+            );
+            if let (Some(prev_state), Some(prev_action)) =
+                (neural.last_state.clone(), neural.last_action_idx)
+            {
+                neural.record_step(prev_state, prev_action, 1.0);
+            }
+            neural.last_state = Some(state);
         }
+        1 => {
+            // Q-learning: +1 reward
+            let state = QTable::state_from_pos(pos_x, pos_y, nearest_x, nearest_y);
+            if let (Some(prev_state), Some(prev_action)) =
+                (qtable.last_state, qtable.last_action_idx)
+            {
+                qtable.update(prev_state, prev_action, 1.0, state);
+            }
+        }
+        _ => {}
     }
 }
 

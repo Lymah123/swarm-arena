@@ -6,7 +6,7 @@ use sha2::{Sha256, Digest};
 const INPUT_SIZE: usize = 8;
 const HIDDEN_SIZE: usize = 32;
 const OUTPUT_SIZE: usize = 5;
-const LR: f32 = 0.01;
+const LR: f32 = 0.001;
 const GAMMA: f32 = 0.99;
 const EPSILON: f32 = 0.10;
 
@@ -77,7 +77,25 @@ impl MLP {
         self.forward(x).2
     }
 
+    pub fn has_nan(&self) -> bool {
+        let bad = |w: &f32| w.is_nan() || w.is_infinite();
+        self.w1.iter().any(|r| r.iter().any(bad)) ||
+        self.w2.iter().any(|r| r.iter().any(bad)) ||
+        self.w3.iter().any(|r| r.iter().any(bad))
+    }
+
+    fn clip_weights(&mut self) {
+        let clip = |w: &mut f32| { *w = w.clamp(-5.0, 5.0); };
+        for row in &mut self.w1 { for w in row { clip(w); } }
+        for row in &mut self.w2 { for w in row { clip(w); } }
+        for row in &mut self.w3 { for w in row { clip(w); } }
+        for b in &mut self.b1 { clip(b); }
+        for b in &mut self.b2 { clip(b); }
+        for b in &mut self.b3 { clip(b); }
+    }
+
     pub fn weight_hash(&self) -> String {
+        if self.has_nan() { return "nan-weights-reset".to_string(); }
         let mut hasher = Sha256::new();
         for row in &self.w1 { for w in row { hasher.update(w.to_le_bytes()); } }
         for row in &self.w2 { for w in row { hasher.update(w.to_le_bytes()); } }
@@ -154,6 +172,14 @@ impl NeuralPolicy {
     pub fn update_on_episode_end(&mut self) {
         if self.trajectory.is_empty() { return; }
 
+        // Detect and recover from NaN weights
+        if self.model.has_nan() {
+            println!("[NEURAL] NaN weights detected — resetting model");
+            self.model = MLP::new();
+            self.trajectory.clear();
+            return;
+        }
+
         // Compute discounted returns
         let n = self.trajectory.len();
         let mut returns = vec![0.0f32; n];
@@ -177,6 +203,25 @@ impl NeuralPolicy {
             let mut d_logits: Vec<f32> = probs.iter().map(|p| -advantage * LR * (-p)).collect();
             d_logits[tr.action_idx] = -advantage * LR * (1.0 - probs[tr.action_idx]);
 
+            // Entropy bonus — encourage exploration
+            let entropy_bonus = 0.01f32;
+            let mut d_logits_with_entropy: Vec<f32> = d_logits.iter().zip(probs.iter())
+                .map(|(d, p)| d - entropy_bonus * (1.0 + p.ln().max(-10.0)))
+                .collect();
+
+            // Gradient clipping — max norm 1.0
+            let grad_norm = d_logits_with_entropy.iter().map(|g| g * g).sum::<f32>().sqrt();
+            if grad_norm > 1.0 {
+                let scale = 1.0 / grad_norm;
+                for g in d_logits_with_entropy.iter_mut() { *g *= scale; }
+            }
+            let d_logits = d_logits_with_entropy;
+
+            // NaN guard
+            if d_logits.iter().any(|g| g.is_nan() || g.is_infinite()) {
+                continue;
+            }
+
             // Update w3, b3
             for (i, row) in self.model.w3.iter_mut().enumerate() {
                 for (j, w) in row.iter_mut().enumerate() { *w -= d_logits[i] * h2[j]; }
@@ -189,6 +234,9 @@ impl NeuralPolicy {
             }).collect();
             let d_h2_pre: Vec<f32> = d_h2.iter().zip(h2.iter())
                 .map(|(d, h)| if *h > 0.0 { *d } else { 0.0 }).collect();
+
+            // Guard hidden gradients
+            if d_h2_pre.iter().any(|g| g.is_nan() || g.is_infinite()) { continue; }
 
             // Update w2, b2
             for (i, row) in self.model.w2.iter_mut().enumerate() {
@@ -203,12 +251,17 @@ impl NeuralPolicy {
             let d_h1_pre: Vec<f32> = d_h1.iter().zip(h1.iter())
                 .map(|(d, h)| if *h > 0.0 { *d } else { 0.0 }).collect();
 
+            if d_h1_pre.iter().any(|g| g.is_nan() || g.is_infinite()) { continue; }
+
             // Update w1, b1
             for (i, row) in self.model.w1.iter_mut().enumerate() {
                 for (j, w) in row.iter_mut().enumerate() { *w -= d_h1_pre[i] * tr.state[j]; }
                 self.model.b1[i] -= d_h1_pre[i];
             }
         }
+
+        // Clip weights to prevent explosion
+        self.model.clip_weights();
 
         self.total_rewards.push(self.episode_reward);
         self.episode_count += 1;

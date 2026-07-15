@@ -161,7 +161,7 @@ Episodes auto-commit to **Solana devnet** every 200 ticks. View results live on 
 - **Multi-operator support** — external training loops calling the same Anchor program with different keypairs
 - **Mainnet deployment** — real SOL rewards for high-scoring agents
 - **Reputation composability** — other Solana programs read `AgentReputation` PDAs to gate access or rank agents
-- **Neural network policies** — replace tabular Q-learning with a small MLP, model hash stored on-chain
+- **Neural network policies** — MLP (8→32→32→5) with REINFORCE training, model weight hash stored on-chain each episode. DQN with experience replay planned for stable convergence.
 
 ---
 
